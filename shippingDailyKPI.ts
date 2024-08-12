@@ -31,7 +31,7 @@ function main(workbook: ExcelScript.Workbook) {
   let values: string[][] = columnB.getValues() as string[][]
 
   let programs: { [key: string]: string } = {
-      "PAG Profile Parts": "PAG Profile Parts & SA_LR", "AIRBUS A350 Crash Rod": "AIRBUS Crash Rod", "BOMBARDIER SHORTS BEAM ASSY": "BOMBARDIER", "Deharde A321 QSF-B Couplings": "DEHARDE", "DEHARDE A340 LR Parts": "DEHARDE", "Orizon  Aerostructures-Chanute INC": "SPIRIT RO", "SPIRIT SUNSHINE": "SPIRIT RO", "Pilatus PC-12 Seat Rails": "Pilatus", "SONACA C-Series Trailing Edge": "Sonaca", "Sonaca Embraer Trailing Edge": "Sonaca", "Sonaca Girders": "Sonaca", "Sonaca Trailing Edge": "Sonaca", "Telair International": "Telair", "TE A350 Raceways": "Tyco", "SPIRIT BOEING": "SPIRIT RO", "SPIRIT-BOEING-777 CFB": "SPIRIT RO", "BOMBARDIER CHALLENGER STRING.": "BOMBARDIER", "Deharde Maschinenbau": "DEHARDE", "Magellan A350 Struts": "Magellan", "MECACHROME Fittings": "MECACHROME", "Pilatus PC - 24 Seat Rail.": 'Pilatus', "Premium Aerotec Cross Beam": "PAG Cross Beams FQT", "Spirit Composite": "SPIRIT RO", "SPIRIT KEEL BEAM": "SPIRIT RO", "Triumph A330 Leading Edge": "Triumph A330", "Sogerma A400M Channels": "Sogerma A400M", "Mecachrome": "MECACHROME", "AIRBUS A350 PLR": "AIRBUS - A350 PLR"
+    "Sirius" : "SIRIUS", "PAG Profile Parts": "PAG Profile Parts & SA_LR", "AIRBUS A350 Crash Rod": "AIRBUS Crash Rod", "BOMBARDIER SHORTS BEAM ASSY": "BOMBARDIER", "Deharde A321 QSF-B Couplings": "DEHARDE", "DEHARDE A340 LR Parts": "DEHARDE", "Orizon  Aerostructures-Chanute INC": "SPIRIT RO", "SPIRIT SUNSHINE": "SPIRIT RO", "Pilatus PC-12 Seat Rails": "Pilatus", "SONACA C-Series Trailing Edge": "Sonaca", "Sonaca Embraer Trailing Edge": "Sonaca", "Sonaca Girders": "Sonaca", "Sonaca Trailing Edge": "Sonaca", "Telair International": "Telair", "TE A350 Raceways": "Tyco", "SPIRIT BOEING": "SPIRIT RO", "SPIRIT-BOEING-777 CFB": "SPIRIT RO", "BOMBARDIER CHALLENGER STRING.": "BOMBARDIER", "Deharde Maschinenbau": "DEHARDE", "Magellan A350 Struts": "Magellan", "MECACHROME Fittings": "MECACHROME", "Pilatus PC - 24 Seat Rail.": 'Pilatus', "Premium Aerotec Cross Beam": "PAG Cross Beams FQT", "Spirit Composite": "SPIRIT RO", "SPIRIT KEEL BEAM": "SPIRIT RO", "Triumph A330 Leading Edge": "Triumph A330", "Sogerma A400M Channels": "Sogerma A400M", "Mecachrome": "MECACHROME", "AIRBUS A350 PLR": "AIRBUS - A350 PLR"
   }
 
 
@@ -79,14 +79,8 @@ function main(workbook: ExcelScript.Workbook) {
   sourceWorksheet.getRange("P1").setValue("Unit Price EUR");
   sourceWorksheet.getRange("T1").setValue("Total Value (by Need date)");
   sourceWorksheet.getRange("AJ1").setValue("Days pre need-date");
-  // sourceWorksheet
-  //     .getRange(`K2:K${lastRow}`)
-  //     .copyFrom(`K2:K${lastRow}`, ExcelScript.RangeCopyType.values, false, false);
-
-  // deleteFilteredRows(["Available to ship"], [["0"]], table);
 
   
-
   //create pivot table
   let table1 = workbook.getTable("Table1");
   let newPivotTable = workbook.addPivotTable(
@@ -108,7 +102,7 @@ function main(workbook: ExcelScript.Workbook) {
   let summaryRange = pivotSheet.getUsedRange();
   let lastRowSummary = summaryRange.getRowCount();
 
-  pivotSheet.getRange('F2').setFormulaLocal(`=XLOOKUP(A2,'${invoiceProjectionName}'!A:A,'${invoiceProjectionName}'!B:B)`)
+  pivotSheet.getRange('F2').setFormulaLocal(`=XLOOKUP(A2,'${invoiceProjectionName}'!A:A,'${invoiceProjectionName}'!B:B),"Please enter value manually"`)
   pivotSheet.getRange('F2').autoFill(pivotSheet.getRange(`F2:F${lastRowSummary - 1}`),ExcelScript.AutoFillType.fillDefault)
   pivotSheet.getRange('F1').setValue('Target');
 
