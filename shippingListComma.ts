@@ -10,11 +10,11 @@ function main(workbook: ExcelScript.Workbook) {
     const worksheets = workbook.getWorksheets();
     const destinationSheetName = `${day}.${month}.${year}`;
     let destinationSheet = workbook.getWorksheet(destinationSheetName);
+    let lobSheet = workbook.getWorksheet(`LoB.${destinationSheetName}`);
 
-    
     worksheets.forEach(sheet => {
         const sheetName = sheet.getName();
-        const checkName = sheetName == 'Query1' || sheetName == 'Blocked' ||  sheetName == `LoB.${destinationSheetName}`;
+        const checkName = sheetName == 'Query1' || sheetName == 'Blocked' || sheetName == `LoB.${destinationSheetName}`;
         if (!checkName) {
             sheet.delete()
         }
@@ -79,35 +79,31 @@ function main(workbook: ExcelScript.Workbook) {
     // destinationSheet
     //     .getRange("S2")
     //     .autoFill(`S2:S${lastRow}`, ExcelScript.AutoFillType.fillDefault);
+
     destinationSheet
         .getRange("N:N")
         .insert(ExcelScript.InsertShiftDirection.right);
-    destinationSheet.getRange("N1").setValue("First critical");
+    destinationSheet.getRange("N1").setValue("CAT3 WEEK");
     destinationSheet
         .getRange("O:O")
         .insert(ExcelScript.InsertShiftDirection.right);
-    destinationSheet.getRange("O1").setValue("First critical DAY");
+    destinationSheet.getRange("O1").setValue("CAT3 DAY");
     destinationSheet
         .getRange("P:P")
         .insert(ExcelScript.InsertShiftDirection.right);
     destinationSheet.getRange("P1").setValue("Ship via");
-
+    destinationSheet.getRange("P:P")
+        .insert(ExcelScript.InsertShiftDirection.right);
+    destinationSheet.getRange("P1").setValue("CAT5 DAY");
+    destinationSheet.getRange("P:P")
+        .insert(ExcelScript.InsertShiftDirection.right);
+    destinationSheet.getRange("P1").setValue("CAT5 WEEK");
     destinationSheet
         .getRange("U:U")
         .insert(ExcelScript.InsertShiftDirection.right);
     destinationSheet.getRange("U1").setValue("Blocked");
-    destinationSheet
-        .getRange(`U1:U${lastRow}`)
-        .copyFrom(
-            destinationSheet.getRange(`U1:U${lastRow}`),
-            ExcelScript.RangeCopyType.values,
-            false,
-            false
-        );
 
-    destinationSheet
-        .getRange("U2")
-        .setFormulaLocal("=XLOOKUP(@G:G,Blocked!A:A,Blocked!B:B,0)");
+    destinationSheet.getRange("U2").setFormulaLocal("=XLOOKUP(@G:G,Blocked!A:A,Blocked!B:B,0)");
 
     destinationSheet
         .getRange("U2")
@@ -117,9 +113,9 @@ function main(workbook: ExcelScript.Workbook) {
     const epicorPartNo = destinationRange.getColumn(6).getValues();
     const partNumOccurences = new Map<string, number>();
 
-    const onHandQty = destinationRange.getColumn(18).getValues();
+    const onHandQty = destinationRange.getColumn(21).getValues();
     const asnQty = destinationRange.getColumn(5).getValues();
-    const openDemand = destinationRange.getColumn(23).getValues();
+    const openDemand = destinationRange.getColumn(25).getValues();
     const blocked = destinationRange.getColumn(20).getValues();
 
     for (let i = 1; i < epicorPartNo.length; i++) {
@@ -138,7 +134,7 @@ function main(workbook: ExcelScript.Workbook) {
         let blockedQTY = blocked[row][0] as number;
 
         for (let i = 0; i < occurence; i++) {
-            const toBeShippedCell = destinationSheet.getRange(`V${row + 1}`);
+            const toBeShippedCell = destinationSheet.getRange(`X${row + 1}`);
             let asn = asnQty[row][0] as number;
             let demand = openDemand[row][0] as number;
 
@@ -163,46 +159,35 @@ function main(workbook: ExcelScript.Workbook) {
     destinationSheet
         .getRange("N2")
         .setFormulaLocal(
-            `=XLOOKUP(E2,LoB.${day}.${month}.${year}!A:A,LoB.${day}.${month}.${year}!AC:AC,"Not critical"`
+            `=XLOOKUP(E2,LoB.${day}.${month}.${year}!A:A,LoB.${day}.${month}.${year}!AC:AC,"NO CAT3",,-1`
         );
+
+    destinationSheet
+        .getRange("Q2")
+        .setFormulaLocal(
+            `=IF(AB2="Spirit Firm Serial PO","Firm PO",IF(OR(ISBLANK(P2),P2=""),"NO CAT5",IF(P2="Current","Current",IF(P2="NO CAT5","NO CAT5",IFNA(DATE(IF(ISNUMBER(SEARCH(",", P2)),VALUE(RIGHT(P2, 4)),IF(DATEVALUE(LEFT(P2, 3) & " " & MID(P2, 5, 2) & ", " & YEAR(TODAY())) < TODAY(),2025,IF(DATEVALUE(LEFT(P2, 3) & " " & MID(P2, 5, 2) & ", " & YEAR(TODAY())) > TODAY(),2024,YEAR(TODAY())))),MATCH(LEFT(P2,3), {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}, 0),MID(P2, 5, 2)),"Not critical")))))`
+        );
+
+    destinationSheet.getRange("Q:Q").setNumberFormatLocal("dd/mm/yyyy");
     destinationSheet
         .getRange("O2")
         .setFormulaLocal(
-            `=IF(OR(ISBLANK(N2),N2=""),"NOT CRITICAL",IF(N2="Current","Current",IF(N2="Not critical","Not critical",IFNA(DATE(IF(ISNUMBER(SEARCH(",", N2)),VALUE(RIGHT(N2, 4)),IF(DATEVALUE(LEFT(N2, 3) & " " & MID(N2, 5, 2) & ", " & YEAR(TODAY())) < TODAY(),2025,IF(DATEVALUE(LEFT(N2, 3) & " " & MID(N2, 5, 2) & ", " & YEAR(TODAY())) > TODAY(),2024,YEAR(TODAY())))),MATCH(LEFT(N2,3), {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}, 0),MID(N2, 5, 2))-7,"Not critical"))))`
+            `=IF(AB2="Spirit Firm Serial PO","Firm PO",IF(OR(ISBLANK(N2),N2=""),"NO CAT3",IF(N2="Current","Current",IF(N2="Not critical","Not critical",IFNA(DATE(IF(ISNUMBER(SEARCH(",", N2)),VALUE(RIGHT(N2, 4)),IF(DATEVALUE(LEFT(N2, 3) & " " & MID(N2, 5, 2) & ", " & YEAR(TODAY())) < TODAY(),2025,IF(DATEVALUE(LEFT(N2, 3) & " " & MID(N2, 5, 2) & ", " & YEAR(TODAY())) > TODAY(),2024,YEAR(TODAY())))),MATCH(LEFT(N2,3), {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}, 0),MID(N2, 5, 2))-7,"NO CAT3")))))`
         );
+    destinationSheet.getRange("P2").setFormulaLocal(`=XLOOKUP(E2,LoB.${day}.${month}.${year}!A:A,LoB.${day}.${month}.${year}!Z:Z,"Not critical",,-1`)
     destinationSheet.getRange("O:O").setNumberFormat("dd/mm/yyyy");
     destinationSheet
-        .getRange("P2")
+        .getRange("R2")
         .setFormulaLocal(
-            `=IFS(O2="Not critical","SEA",AND(O2="Current",Y2<=2600),"UPS",AND(O2="Current",Y2>2600),"AIR",O2-TODAY()>=45,"SEA",AND(O2-TODAY()<45,Y2>2600),"AIR",AND(O2-TODAY()<45,Y2<=2600,O2>TODAY()),"UPS",O2<TODAY(),"SEA")`
+            `=IFS(Q2="Firm PO",IFS(AND(M2-TODAY()<55,AA2>2600),"AIR",AND(M2-TODAY()<55,AA2<=2600),"UPS",M2-TODAY()>=55,"SEA"),O2="Current",IFS(AA2>2600,"AIR",AA2<=2600,"UPS"),Q2="NO CAT5",IFS(O2="NO CAT3","SEA",AND(O2-TODAY()<55,AA2>2600),"AIR",AND(O2-TODAY()<55,AA2<=2600),"UPS",O2-TODAY()>=55,"SEA"),AND(Q2-TODAY()<55,AA2<=2600),"UPS",AND(Q2-TODAY()<55,AA2>2600),"AIR",Q2-TODAY()>=55,"SEA")`
         );
 
-    // destinationSheet
-    //     .getRange("P2")
-    //     .autoFill(`P2:P${lastRow}`, ExcelScript.AutoFillType.fillDefault);
-
-
-
-
-
-    //This line makes sure no #REF error is being thrown out after deleting a referenced sheet
-    // destinationSheet
-    //     .getRange(`N1:P${lastRow}`)
-    //     .copyFrom(
-    //         destinationSheet.getRange(`N1:P${lastRow}`),
-    //         ExcelScript.RangeCopyType.values,
-    //         false,
-    //         false
-    //     );
-
-
-
-        destinationSheet
+    destinationSheet
         .getRange("N2")
         .autoFill(`N2:N${lastRow}`, ExcelScript.AutoFillType.fillDefault);
 
 
-        destinationSheet
+    destinationSheet
         .getRange("O2")
         .autoFill(`O2:O${lastRow}`, ExcelScript.AutoFillType.fillDefault);
 
@@ -211,13 +196,13 @@ function main(workbook: ExcelScript.Workbook) {
         .getRange("W2")
         .autoFill(`W2:W${lastRow}`, ExcelScript.AutoFillType.fillDefault);
 
- 
+
 
     //CONDITIONAL FORMATTING
     let conditionalFormatting: ExcelScript.ConditionalFormat;
 
     conditionalFormatting = destinationSheet
-        .getRange("P:P")
+        .getRange("R:R")
         .addConditionalFormat(ExcelScript.ConditionalFormatType.containsText);
     conditionalFormatting.getTextComparison().setRule({
         operator: ExcelScript.ConditionalTextOperator.contains,
@@ -237,7 +222,7 @@ function main(workbook: ExcelScript.Workbook) {
     conditionalFormatting.setPriority(0);
 
     conditionalFormatting = destinationSheet
-        .getRange("P:P")
+        .getRange("R:R")
         .addConditionalFormat(ExcelScript.ConditionalFormatType.containsText);
     conditionalFormatting.getTextComparison().setRule({
         operator: ExcelScript.ConditionalTextOperator.contains,
@@ -257,7 +242,7 @@ function main(workbook: ExcelScript.Workbook) {
     conditionalFormatting.setPriority(0);
 
     conditionalFormatting = destinationSheet
-        .getRange("P:P")
+        .getRange("R:R")
         .addConditionalFormat(ExcelScript.ConditionalFormatType.containsText);
     conditionalFormatting.getTextComparison().setRule({
         operator: ExcelScript.ConditionalTextOperator.contains,
