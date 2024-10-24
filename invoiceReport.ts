@@ -4,8 +4,9 @@ function main(workbook: ExcelScript.Workbook) {
 	const currentYear = date.getFullYear();
 	const sourceWs = workbook.getWorksheet("Summary");
 	const tempWs = workbook.addWorksheet("temp");
-	const mainWsName = `0${monthIndex + 1}.${currentYear}`
+	const mainWsName = `${monthIndex + 1}.${currentYear}`
 	const mainWs = workbook.addWorksheet(mainWsName);
+	const packedWs = workbook.addWorksheet(`Packed ${mainWsName}`);
 	const months = [
 		"January",
 		"February",
@@ -26,11 +27,11 @@ function main(workbook: ExcelScript.Workbook) {
 		.copyFrom(sourceWs.getUsedRange(), ExcelScript.RangeCopyType.values);
 	const lastRowTemp = tempWs.getUsedRange().getRowCount();
 	const uacvTotal = tempWs.getRange(`T${lastRowTemp + 1}`).getValue();
-	const colDArr =  tempWs.getRange(`D1:D${lastRowTemp}`).getValues()
+	const colDArr = tempWs.getRange(`D1:D${lastRowTemp}`).getValues()
 	const nonBlankElements = colDArr.filter((row) => {
 		const value = row[0];
 		return typeof value === "string" && value.trim() !== "" && value !== `Total Invoice\n(€)` && value !== 'Program Group'
-	}).map((val) => val[0]).filter((el,index, self) => {
+	}).map((val) => val[0]).filter((el, index, self) => {
 		return self.indexOf(el) === index
 	}).sort()
 
@@ -169,5 +170,37 @@ function main(workbook: ExcelScript.Workbook) {
 		.getRangeBorder(ExcelScript.BorderIndex.insideHorizontal)
 		.setWeight(ExcelScript.BorderWeight.thin);
 
+
+	packedWs
+		.getRange("A1")
+		.copyFrom(mainWs.getUsedRange(), ExcelScript.RangeCopyType.all);
+
+	packedWs.getRange("C:C").insert(ExcelScript.InsertShiftDirection.right)
+	packedWs.getRange("C2").setValue("Packed not invoiced €")
+	
+	
+	
+
+	let tempNCol = tempWs.getRange(`N1:N${lastRowTemp}`);
+	let valuesN = tempNCol.getValues();
+
+	for (let row = 0; row < valuesN.length; row++) {
+		let value = valuesN[row][0];
+
+		if (typeof value === "string" && !isNaN(Number(valuesN))) {
+			valuesN[row][0] = Number(value)
+		}
+	}
+	tempNCol.setValues(valuesN);
+	packedWs.getRange("C3").setFormula("=SUMIF(temp!D:D,'Packed 10.2024'!A3,temp!N:N)");
+	packedWs.getRange("C3").autoFill(`C3:C${lastRowMain}`,ExcelScript.AutoFillType.fillDefault)
+	packedWs.getRange().getFormat().autofitColumns();
+	packedWs.getRange(`C${lastRowMain + 1}`).setFormula(`=SUM(C3:C${lastRowMain})`)
+	packedWs.getRange(`b${lastRowMain + 3}`).setFormula(`=SUM(B${lastRowMain + 1} + C${lastRowMain + 1} + B${lastRowMain+2})`)
+
+	packedWs.getRange(`C3:C${lastRowMain}`).copyFrom(packedWs.getRange(`C3:C${lastRowMain}`),ExcelScript.RangeCopyType.values)
+
 	tempWs.delete()
 }
+
+
