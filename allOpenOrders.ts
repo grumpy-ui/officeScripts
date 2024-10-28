@@ -54,19 +54,24 @@ function main(workbook: ExcelScript.Workbook) {
   workWs.getRange("K:K").insert(ExcelScript.InsertShiftDirection.right);
   workWs.getRange("K1").setValue("WIP Qty");
   workWs.getRange("L:L").insert(ExcelScript.InsertShiftDirection.right);
-  workWs.getRange("L1").setValue("WIP Qty Distributed");
+  workWs.getRange("L1").setValue("WIP Value");
   workWs.getRange("M:M").insert(ExcelScript.InsertShiftDirection.right);
   workWs.getRange("M1").setValue("Available to ship");
+  workWs.getRange("L:L").insert(ExcelScript.InsertShiftDirection.right);
+  workWs.getRange("L1").setValue("WIP Qty Distributed");
+
   const allWIPjobs = workWs
-    .getRange(`N2:N${workWs.getUsedRange().getRowCount()}`)
+    .getRange(`O2:O${workWs.getUsedRange().getRowCount()}`)
     .getValues();
   const allWIPqty: number[][] = [];
+  const wipValueArr: number[][] = [];
   const onHandDistrArr = workWs
-    .getRange(`R2:R${lastRowWs}`)
+    .getRange(`S2:S${lastRowWs}`)
     .getValues()
     .map((oh) => (oh[0] === "" ? [0] : oh));
-  console.log(onHandDistrArr);
-  const qtyNotShipped = workWs.getRange(`O2:O${lastRowWs}`).getValues();
+  const qtyNotShipped = workWs.getRange(`P2:P${lastRowWs}`).getValues();
+  const totalLinePrice = workWs.getRange(`AB2:AB${lastRowWs}`).getValues();
+  const orderQty = workWs.getRange(`I2:I${lastRowWs}`).getValues();
 
   allWIPjobs.forEach((wip) => {
     const wipQty = extractWIPQty(wip[0]);
@@ -103,8 +108,11 @@ function main(workbook: ExcelScript.Workbook) {
 
     for (let i = 0; i < partOccurence; i++) {
       let wipDist: number;
+      let wipValue: number;
       const currOnHandDist = onHandDistrArr[row - 1][0];
       const currQtyNotShipped = qtyNotShipped[row - 1][0];
+      const currTotalLinePrice = totalLinePrice[row - 1][0];
+      const currOrderQty = orderQty[row - 1][0];
       if (currQtyNotShipped <= currOnHandDist || totalWipCell === 0) {
         wipDist = 0;
       } else {
@@ -118,11 +126,14 @@ function main(workbook: ExcelScript.Workbook) {
           totalWipCell -= wipDist;
         }
       }
-      wipDistArr.push([wipDist])
+      wipDistArr.push([wipDist]);
+      wipValue = (currTotalLinePrice / currOrderQty) * wipDist;
+      wipValueArr.push([wipValue]);
       row++;
     }
   }
-  
+  workWs.getRange(`L2:L${lastRowWs}`).setValues(wipDistArr);
+  workWs.getRange(`M2:M${lastRowWs}`).setValues(wipValueArr);
   workWs.getRange().getFormat().autofitColumns();
 
   //Functions
